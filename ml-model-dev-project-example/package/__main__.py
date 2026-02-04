@@ -122,8 +122,11 @@ if __name__ == '__main__':
     loader = DatasetLoader()
     dataset = loader.get_dataset(num_timesteps_in=4, num_timesteps_out=1, save=False)
 
-    # 4 - Open Notebook tGNN.ipynb for Model Training and Evaluation:
-    # TODO: evaluate coding sample
+    # 4 - Model Training and Evaluation:
+    # TODO: read learned parameter
+
+    # 5 - Prediction:
+    # TODO: add prediction step
 
     print("Dataset type:  ", dataset)
     print("Number of samples / sequences: ", len(set(dataset)))
