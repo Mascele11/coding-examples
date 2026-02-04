@@ -8,11 +8,13 @@ from typing import Union, Any, Tuple
 import numpy as np
 import pandas as pd
 
+
 import torch
-import torch.nn as nn
 
 # ------- custom modules -------
-from sampleapplication.package.models.deep import DeepModel
+import torch.nn as nn
+import torch.nn.functional as F
+from torch_geometric_temporal.nn.recurrent import A3TGCN
 
 
 # ======================================================================================================================
@@ -25,32 +27,31 @@ torch_extensions: [str] = ['.pth']
 # ======================================================================================================================
 #   Class
 # ======================================================================================================================
-class PytorchModel(DeepModel):
+
+class TemporalGNN(torch.nn.Module):
     # ------- attributes -------------------------------------------------------
-    pytorch_model: nn.Module = None
+    pytorch_model: torch.Module = None
 
     # ------- constructors -----------------------------------------------------
-    def __init__(self, optimizer):
-        return
+    def __init__(self, node_features, periods):
+        super(TemporalGNN, self).__init__()
+        # Attention Temporal Graph Convolutional Cell
+        self.tgnn = A3TGCN(in_channels=node_features,
+                           out_channels=600,
+                           periods=periods)
+        # Equals single-shot prediction
+        self.linear = torch.nn.Linear(600, periods)
 
     # ------- methods ----------------------------------------------------------
-    def train(self, data: Union[np.ndarray, pd.DataFrame], target: Union[np.ndarray, pd.Series] = None,
-              epochs: int = 5, batch_size: int = 32, seed: int = None) -> 'PytorchModel':
-        raise NotImplementedError("implement according to your need")  # TODO: implement according to your need
-
-    def predict(self, data: Union[np.ndarray, pd.DataFrame]) -> pd.Series:
-        raise NotImplementedError("implement according to your need")  # TODO: implement according to your need
-
-    def load(self, model_path: Union[str, Path]) -> 'PytorchModel':
-        model_path = Path(model_path)
-        assert model_path.suffix in torch_extensions
-        self.pytorch_model = torch.load(model_path)
-        return self
-
-    def save(self, model_path: Union[str, Path]):
-        model_path = Path(model_path)
-        assert model_path.suffix in torch_extensions
-        torch.save(self.pytorch_model, model_path)
+    def forward(self, x, edge_index, edge_attributes):
+        """
+        x = Node features for T time steps
+        edge_index = Graph edge indices
+        """
+        h = self.tgnn(X=x, edge_index=edge_index, edge_weight=edge_attributes)
+        h = F.relu(h)
+        h = self.linear(h)
+        return h
 
     # ------- internal facilities ----------------------------------------------
     def _architecture(self, input_shape: Tuple[int], output_shape: int,
