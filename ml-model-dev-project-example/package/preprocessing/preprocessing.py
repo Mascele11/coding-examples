@@ -33,11 +33,11 @@ class Preprocessing():
 
     # ------- internal facilities ----------------------------------------------
     def __get_data(self, batch):
-        X =  #TODO logic
-        y =  #TODO logic
+        X = 1 #TODO logic
+        y = 1 #TODO logic
 
         for i, id in enumerate(batch):
-            X[i,] =  #TODO logic
-            y[i] =   #TODO labels
+            X[i,] =  1#TODO logic
+            y[i] =   1#TODO labels
 
         return X, y
