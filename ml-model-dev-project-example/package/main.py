@@ -7,6 +7,8 @@ import networkx
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import torch
+import torch_geometric
 from torch_geometric.utils import dense_to_sparse
 from torch_geometric_temporal.signal import StaticGraphTemporalSignal
 
@@ -21,22 +23,22 @@ from preprocessing.pytorch_dataloader import DatasetLoader
 #   Preparation Functions
 # ======================================================================================================================
 
-def transform_df_to_npy(timeseries: pd.DataFrame, number_of_features: int, save: bool = False) -> np.array:
+def transform_df_to_npy(timeseries: pd.DataFrame, number_of_nodes: int, save: bool = False) -> np.array:
     """
     This function transform an ORDERED IN ASCENDING ORDER BY TIME timeseries df to .npy 3D.
-    Also, it arranges in order the nodes to be sorted in the same way  for each snapshot
+    Also, it arranges in order the nodes to be sorted in the same way for each snapshot
 
     Parameters
     ----------
     timeseries
-    number_of_features
+    number_of_nodes
     save
 
     Returns
     -------
-    node_values_ercot
+    node_values
     """
-    node_number = number_of_features
+    node_number = number_of_nodes
     slice_temp = []
     node_values_list = []
     count = 0
@@ -60,7 +62,7 @@ def transform_df_to_npy(timeseries: pd.DataFrame, number_of_features: int, save:
     node_values_ercot = np.array(node_values_list)
 
     if save:
-        with open('./data/node_values_ercot.npy', 'wb') as f:
+        with open('data/nodes_values.npy', 'wb') as f:
             np.save(f, node_values_ercot)
 
     return node_values_ercot
@@ -77,8 +79,8 @@ def get_adj_matrix(dependencies: pd.DataFrame, save: bool = False) -> np.array:
     This function create the network of the model and extract the adj matrix.
     Parameters
     ----------
-    dependencies
-    save
+    dependencies df: ["zoneID", "depends_from_ID", "dependence_type"]
+    save:
 
     Returns
     -------
@@ -98,9 +100,8 @@ def get_adj_matrix(dependencies: pd.DataFrame, save: bool = False) -> np.array:
     A = A0 / row_sums[:, np.newaxis]
 
     if save:
-        with open('./data/node_values_ercot.npy', 'wb') as f:
+        with open('data/A.npy', 'wb') as f:
             np.save(f, A)
-
     return A
 
 
@@ -109,20 +110,31 @@ def get_adj_matrix(dependencies: pd.DataFrame, save: bool = False) -> np.array:
 # ======================================================================================================================
 if __name__ == '__main__':
     # local variables
-    PROJECT_ROOT: Path = Path(__file__)  # root folder of the repository #
-    # 1 - Transform the timeseries from df to numpy:
-    timeseries_df = pd.read_csv("./data/timeseries_one_year.csv")  # select manually the dataframe
-    #node_values_ercot = transform_df_to_npy(timeseries=timeseries_df, number_of_features=36, save=False)
+    PROJECT_ROOT: Path = Path(__file__).parents[1]  # root folder of the repository
+    DATA_LOCATION: Path = PROJECT_ROOT / 'data'
+    RAW_DATA_LOCATION: Path = DATA_LOCATION / 'raw'
+    #PREPROC_DATA_LOCATION: Path = DATA_LOCATION / 'preprocessed'  # root folder of the repository #
 
-    # 2 - Get the adj matrix from dependencies' df:
+    # 0 - Graph Info Required:
+    number_of_nodes: int = 36
+
+    # 1 - Forecasting specifications:
+    time_window = 4 # 60 minutes (15 min of sample time)
+    forecasting_window  = 1
+
+    # 2 - Transform the timeseries from df to numpy:
+    timeseries_df = pd.read_csv("./data/timeseries_one_year.csv")  # select manually the dataframe for your experiments
+    node_values_ercot = transform_df_to_npy(timeseries=timeseries_df, number_of_nodes=number_of_nodes, save=False)
+
+    # 3 - Get the adj matrix from dependencies' df:
     dependencies_df = pd.read_csv('./data/dependencies.csv')
     adj_matrix = get_adj_matrix(dependencies=dependencies_df, save=False)
 
-    # 3 - Get the temporal tGNN using Pytorch Class:
+    # 4 - Get the temporal tGNN using Pytorch Class:
     loader = DatasetLoader()
-    dataset = loader.get_dataset(num_timesteps_in=4, num_timesteps_out=1, save=False)
+    dataset = loader.get_dataset(num_timesteps_in=time_window, num_timesteps_out=forecasting_window, save=False)
 
-    # 4 - Model Training and Evaluation:
+    # 5 - Model Training and Evaluation:
     # TODO: read learned parameter
 
     # 5 - Prediction:
