@@ -3,12 +3,7 @@
 # ======================================================================================================================
 # ------- standard modules -------
 from pathlib import Path
-from typing import Union, Any, Tuple
-
-import numpy as np
-import pandas as pd
-
-
+from typing import Union, Any, Tuple, Self
 import torch
 
 # ------- custom modules -------
@@ -30,8 +25,6 @@ torch_extensions: [str] = ['.pth']
 
 class TemporalGNN(torch.nn.Module):
     # ------- attributes -------------------------------------------------------
-    pytorch_model: torch.Module = None
-
     # ------- constructors -----------------------------------------------------
     def __init__(self, node_features, periods):
         super(TemporalGNN, self).__init__()
@@ -48,6 +41,7 @@ class TemporalGNN(torch.nn.Module):
         x = Node features for T time steps
         edge_index = Graph edge indices
         """
+        # print("Forward is running!") checked
         h = self.tgnn(X=x, edge_index=edge_index, edge_weight=edge_attributes)
         h = F.relu(h)
         h = self.linear(h)
