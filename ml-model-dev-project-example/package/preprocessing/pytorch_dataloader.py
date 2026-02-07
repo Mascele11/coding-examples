@@ -1,11 +1,8 @@
 import os
 import torch
 import pickle
-
 import numpy as np
-import pandas as pd
 from torch_geometric.utils import dense_to_sparse
-from torch_geometric_temporal.dataset import METRLADatasetLoader
 from torch_geometric_temporal.signal import StaticGraphTemporalSignal
 
 class DatasetLoader(object):
@@ -99,3 +96,5 @@ class DatasetLoader(object):
                 pickle.dump(dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         return dataset
+
+
