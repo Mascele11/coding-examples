@@ -1,6 +1,7 @@
 #  Main for Temporal Graph Attention Model Pipeline:
 import logging
 import networkx
+import utils
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -127,7 +128,7 @@ def get_graph(dependencies: pd.DataFrame, save: bool = False, normalize: bool = 
 
 def train_model(model: TemporalGNN, dataset: StaticGraphTemporalSignal,
                 train_ratio: float = 0.8, lr: float=0.01, subset: int = 9000,
-                epochs: int = 100) -> TemporalGNN:
+                epochs: int = 100, save_weights: bool = True) -> TemporalGNN:
 
     train_dataset, test_dataset = temporal_signal_split(dataset, train_ratio=train_ratio)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -158,7 +159,20 @@ def train_model(model: TemporalGNN, dataset: StaticGraphTemporalSignal,
         optimizer.zero_grad()
         print("Epoch {} train RMSE: {:.4f}".format(epoch, loss.item()))
 
+    if save_weights:
+        torch.save(model.state_dict(), "model_weights.pth")
     return model
+
+def evaluate(model, criterion, data_loader, device, print_freq=100, log_suffix=""):
+
+    model.eval()
+    header = f"Test: {log_suffix}"
+
+    num_processed_samples = 0
+    #FIXME: complete evaluation step
+    with torch.inference_mode():
+        pass
+    # gather the stats from all processes
 
 # ======================================================================================================================
 #  Debug Entrypoint
@@ -192,7 +206,7 @@ if __name__ == '__main__':
 
     # 5 - Model Training and Evaluation:
     model = TemporalGNN(node_features=number_of_features, periods=forecasting_window)
-    model = train_model(model, dataset, train_ratio=0.8, epochs=200)
+    model = train_model(model, dataset, train_ratio=0.8, epochs=200, save_weights = True)
 
     # 5 - Prediction:
     # TODO: add prediction step

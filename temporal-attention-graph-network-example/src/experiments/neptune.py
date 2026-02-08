@@ -53,7 +53,7 @@ class NeptuneExperimentTracking(ExperimentTracking):
             project=f'{workspace}/{project}',
             name=id,
             tags=tags, description=description,
-            source_files='*.py'  #TODO extend to the whole Python package
+            source_files='*.py'  #TODO extend to the whole Python src
         )
 
     # ------- methods ----------------------------------------------------------

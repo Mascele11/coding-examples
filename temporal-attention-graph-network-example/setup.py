@@ -45,11 +45,11 @@ def _read_requirements() -> list:
 #   Package Creation
 # ======================================================================================================================
 # Package configuration
-setup(name="package",
+setup(name="src",
       version="0.0.0",
       description="FILLME",
       author="",
       author_email="",
       packages=find_packages(),
-      package_data={"package": _get_resources("package"), "tests": ["stubs/*"]},
+      package_data={"src": _get_resources("src"), "tests": ["stubs/*"]},
       install_requires=_read_requirements())
