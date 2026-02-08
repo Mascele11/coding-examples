@@ -25,47 +25,6 @@ np_extensions: [str] = ['.npy']
 #   Preparation Functions
 # ======================================================================================================================
 
-def transform_df_to_npy(timeseries: pd.DataFrame, number_of_nodes: int, save: bool = False) -> np.array:
-    """
-    This function transform an ORDERED IN ASCENDING ORDER BY TIME timeseries df to .npy 3D.
-    Also, it arranges in order the nodes to be sorted in the same way for each snapshot
-    Parameters
-    ----------
-    :param timeseries:
-    :param number_of_nodes:
-    :param save:
-    Returns
-    -------
-    node_values
-    """
-    slice_temp = []
-    node_values_list = []
-    count = 0
-    for i, row in timeseries.iterrows():
-        if count == number_of_nodes:
-            slice_temp_df = pd.DataFrame(slice_temp)
-            slice_temp_df.sort_values(by=[1], inplace=True)
-            slice_temp_lmp = slice_temp_df[0]
-            slice_temp_tuple = tuple(slice_temp_lmp.values.tolist())
-            node_values_list.append(slice_temp_tuple)
-            slice_temp = []
-            count = 0
-            values = row[["LMP", "nodeID"]]
-            edgeList = values.values.tolist()
-            slice_temp.append(edgeList)
-        else:
-            values = row[["LMP", "nodeID"]]
-            edgeList = tuple(values.values.tolist())
-            slice_temp.append(edgeList)
-        count += 1
-    node_values_np = np.array(node_values_list)
-
-    if save:
-        with open('data/nodes_values.npy', 'wb') as f:
-            np.save(f, node_values_np)
-
-    return node_values_np
-
 def get_graph(dependencies: pd.DataFrame, save: bool = False, normalize: bool = True, plot: bool = False) -> csr_matrix:
     """
     This function create the network of the model and extract the adj matrix.
@@ -120,7 +79,46 @@ def get_graph(dependencies: pd.DataFrame, save: bool = False, normalize: bool = 
             np.save(f, A)
     return A
 
+def transform_df_to_npy(timeseries: pd.DataFrame, number_of_nodes: int, save: bool = False) -> np.array:
+    """
+    This function transform an ORDERED IN ASCENDING ORDER BY TIME timeseries df to .npy 3D.
+    Also, it arranges in order the nodes to be sorted in the same way for each snapshot
+    Parameters
+    ----------
+    :param timeseries:
+    :param number_of_nodes:
+    :param save:
+    Returns
+    -------
+    node_values
+    """
+    slice_temp = []
+    node_values_list = []
+    count = 0
+    for i, row in timeseries.iterrows():
+        if count == number_of_nodes:
+            slice_temp_df = pd.DataFrame(slice_temp)
+            slice_temp_df.sort_values(by=[1], inplace=True)
+            slice_temp_lmp = slice_temp_df[0]
+            slice_temp_tuple = tuple(slice_temp_lmp.values.tolist())
+            node_values_list.append(slice_temp_tuple)
+            slice_temp = []
+            count = 0
+            values = row[["LMP", "nodeID"]]
+            edgeList = values.values.tolist()
+            slice_temp.append(edgeList)
+        else:
+            values = row[["LMP", "nodeID"]]
+            edgeList = tuple(values.values.tolist())
+            slice_temp.append(edgeList)
+        count += 1
+    node_values_np = np.array(node_values_list)
 
+    if save:
+        with open('data/nodes_values.npy', 'wb') as f:
+            np.save(f, node_values_np)
+
+    return node_values_np
 
 # ======================================================================================================================
 #   Analytical Functions
