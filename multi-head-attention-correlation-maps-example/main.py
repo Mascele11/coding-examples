@@ -7,7 +7,7 @@ from timm.models.vision_transformer import Attention
 import matplotlib.colors as colors
 
 # ------- custom modules -------
-from model.attention_rollout import MultiHeadAttentionRollout
+from model.multi_head_attention_rollout import MultiHeadAttentionRollout
 
 
 # ======================================================================================================================
