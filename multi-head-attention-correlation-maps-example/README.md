@@ -8,52 +8,23 @@
   - *Model_weights*: [Google Drive](https://drive.google.com/file/d/1ex5ZrIKhsnLj2EuUkP9We3Bpcr1kVh5d/view?usp=sharing)
 - Model hidden architecture has been analyzed to describe the sequence-image-sequence transformations and their tensors' dimensionality
 - The **MultiHeadAttentionRollout** class has been implemented:
-  - Provides deep insights into how the model attends to different temporal patterns
-  - Extracts and analyzes attention weights from the transformer's multi-head self-attention mechanism
-- Model's 2D *spatial-attention* has been translated into temporal attention patterns by extracting heads' **Attention Maps**
-- **Attention Maps** have been scaled to real input time samples through patch conversion
+  - Builds attention maps by extracting attention weights from the transformer's multi-head self-attention mechanism
+  - Trasforms 2D spatial token-token attention maps into 1D temporal attention
 - **Attention Maps** have been analyzed and visualized to demonstrate how the model identifies **periodicity** and **lagged correlations** in **zero-learning** time series data.
-
----
-
-## Quick Start
-```bash
-# Clone repository
-git clone https://github.com/Mascele11/coding-examples.git
-cd coding-examples/multi-head-attention-correlation-maps-example
-
-# Run experiments
-python main.py
-```
-
-**Output**: Generates combined visualization plots in `experiments/attention_maps/`
-
----
 
 ## Key Features
 
 ✅ **Attention Weight Extraction** - Hook mechanism captures attention during forward pass  
 ✅ **Token-to-Time Conversion** - Transforms 2D patch attention → 1D temporal attention  
 ✅ **Time-Lag Analysis** - Identifies periodic patterns through diagonal correlation  
-✅ **Multi-Head Visualization** - Side-by-side heatmap + lag correlation plots  
-✅ **Experiment Framework** - Compare model behavior across different signals
+✅ **Multi-Head Visualization** - Side-by-side heatmap + lag correlation plots
 
 ---
 
-## Experiments: Harmonic Sensitivity Analysis
+## Harmonic Sensitivity Analysis - Which Head is Learning Periodicity?
 
-All experiments use **512-sample synthetic signals** and analyze **Head 7**, which shows strong sensitivity to periodic patterns.
-
-### Signal Periods (For Reference)
-For `sin(ωn)`, period **P = 2π/ω**:
-
-| Component | Period |
-|-----------|--------|
-| `sin(n/10)` | ~63 samples |
-| `sin(n/5)` | ~31 samples |
-| `cos(n)` | ~6 samples |
-
----
+The experiment goal is demonstrating which head is modeling the harmonics. 
+All experiments use **512-sample synthetic signals** and analyze **Head 7**, chosen after multi-head analysis. 
 
 ### Experiment 1: Three Harmonics
 
@@ -62,12 +33,10 @@ For `sin(ωn)`, period **P = 2π/ω**:
 ![Experiment 1](experiments/attention_maps/experiment_1_head_7_correlations.png)
 
 **Findings**:
-- Lag-attention peaks at **≈63, 126, 189 samples** (multiples of fundamental period)
-- ✅ All three harmonic components detected in attention patterns
+- Lag-attention peaks at **≈63, 3x63, 6x63 samples** (multiples of first harmonic fundamental period)
+- 🔍 Hypothesis: Head 7 models harmonic 1 (fundamental period ≈63)
 
----
-
-### Experiment 2: Reduced Harmonics (Missing Component)
+### Experiment 2: Removing the Fundamental — Proof of Periodicity Detection
 
 **Input**: `sin(n/5 + 50) + cos(n + 50)` *(removed `sin(n/10)`)*
 
@@ -76,17 +45,20 @@ For `sin(ωn)`, period **P = 2π/ω**:
 **Findings**:
 - ❌ Peaks at ~63 samples **disappeared**
 - Only shorter-period structures remain (31-sample and 6-sample components)
-- ✅ **Confirms attention peaks are NOT artifacts** — they directly correspond to true signal periodicity
+- ✅ **Confirms Head 7 was modeling first harmonic** — Peaks directly correspond to true signal periodicity
 
 ---
 
 ## Key Insights
 
-🔬 **Direct Harmonic Detection**: Attention mechanism identifies specific frequency components  
-🎯 **Component Specificity**: Removing harmonics causes corresponding attention peaks to vanish  
-🚫 **No Spurious Patterns**: Peaks reflect genuine temporal structure, not computational artifacts  
-⏰ **Causal Awareness**: Model attends to past patterns at intervals matching signal periodicity
-
+- 🔬 **Explainable Temporal Dependencies**: Attention maps reveal *which* historical patterns causally influence predictions — transforming black-box forecasting into interpretable reasoning
+- 🎯 **Zero-Shot Pattern Discovery**: Pre-trained model identifies temporal structures in completely unseen signals without task-specific training
+- ⏰ **Multi-Scale Temporal Modeling**: Single architecture simultaneously captures short-term transients and long-term periodic dependencies across different time horizons
+- 🔍 **Explainable AI**: Attention weights provide transparent evidence of learned relationships that **domain experts** can validate, verify, and trust
+## Next Steps
+- 🌐 **Multi-Sensor Temporal Modeling**: develop cross-channel attention analysis to visualize how sensor A's history influences sensor B's predictions
+- 🏭 **Domain-Specific Adaptation**: Fine-tune on vehicle telemetry (powertrain, thermal, suspension dynamics) for predictive maintenance
+- 🔍 Extend to a non-predictive task: Exploit big data and temporal correlations to find interpretable insights on anomaly detection system
 ---
 
 ## Implementation Overview
@@ -189,20 +161,23 @@ plotter.plot_attention_heads(
     gamma=1.0
 )
 ```
+---
 
-**Output**: `experiments/attention_maps/experiment_custom_experiment_head_7_correlations.png`
+## Quick Start
+```bash
+# Clone repository
+git clone https://github.com/Mascele11/coding-examples.git
+cd coding-examples/multi-head-attention-correlation-maps-example
+
+# Run experiments
+python main.py
+```
+
+**Output**: Generates combined visualization plots in `experiments/attention_maps/`
 
 ---
 
-## Visualization Parameters
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `powermap` | Enable gamma correction for contrast | `True` |
-| `gamma` | Power-law normalization (`<1` boosts highs) | `1.0` |
-| `robust_percentiles` | Clip outliers for better contrast | `(5, 99)` |
-| `show_log` | Apply log transformation | `False` |
-| `top_overlay_percent` | Contour around top X% attention | `99.99` |
+**Output**: `experiments/attention_maps/experiment_custom_experiment_head_7_correlations.png`
 
 ---
 
@@ -227,16 +202,6 @@ timm>=0.4.12  # Vision Transformer models
 | Blank plots | Ensure `plt.close(fig)` after each save |
 | Mixed visualizations | Use separate figures per head |
 
----
-
-## Future Work
-
-- **Retraining experiments** with different architectures
-- **Cross-head correlation analysis** to identify head specialization
-- **Real-world time series** validation (e.g., stock prices, weather)
-- **Attention rollout** across all layers for full network interpretation
-
----
 
 ## References
 
