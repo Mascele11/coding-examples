@@ -11,14 +11,6 @@
   - Builds attention maps by extracting attention weights from the transformer's multi-head self-attention mechanism
   - Trasforms 2D spatial token-token attention maps into 1D temporal attention
 - **Attention Maps** have been analyzed and visualized to demonstrate how the model identifies **periodicity** and **lagged correlations** in **zero-learning** time series data.
-
-## Key Features
-
-✅ **Attention Weight Extraction** - Hook mechanism captures attention during forward pass  
-✅ **Token-to-Time Conversion** - Transforms 2D patch attention → 1D temporal attention  
-✅ **Time-Lag Analysis** - Identifies periodic patterns through diagonal correlation  
-✅ **Multi-Head Visualization** - Side-by-side heatmap + lag correlation plots
-
 ---
 
 ## Harmonic Sensitivity Analysis - Which Head is Learning Periodicity?
@@ -62,33 +54,36 @@ All experiments use **512-sample synthetic signals** and analyze **Head 7**, cho
 ---
 
 ## Implementation Overview
+## Key Features
+
+✅ **Attention Weight Extraction** - Hook mechanism captures attention during forward pass  
+✅ **Token-to-Time Conversion** - Transforms 2D patch attention → 1D temporal attention  
+✅ **Time-Lag Analysis** - Identifies periodic patterns through diagonal correlation  
+✅ **Multi-Head Visualization** - Side-by-side heatmap + lag correlation plots
+
 
 ### File Structure
 ```
 .
-├── main.py                              # Experiment orchestration
+├── main.py                              # Visulization Class and Experiments
 ├── config.py                            # Model weights path
-├── model/
-│   ├── attention_rollout.py             # Base attention extraction class
-│   └── multi_head_attention_rollout.py  # Visualization & analysis
+├── model/            
+│   └── multi_head_attention_rollout.py  # Base attention extraction class
 └── experiments/
     └── attention_maps/                  # Generated plots
 ```
 
 ### Core Architecture
 
-#### 1. **AttentionRollout** (Base Class)
+#### 1. **MultiHeadAttentionRollout** (Base Class)
 - Registers forward hooks on attention layers
 - Captures attention weights: `(Batch, Heads, Sequence, Sequence)`
 - Converts token-token → time-time attention
-
-#### 2. **MultiHeadAttentionRollout** (Analysis Class)
-Extends base with:
 - Time-lag correlation computation
 - Attention map extraction per head
-- Statistical summaries across heads
 
-#### 3. **MultiHeadAttentionRolloutPlotter** (Visualization Class)
+
+#### 2. **MultiHeadAttentionRolloutPlotter** (Visualization Class)
 Generates combined plots:
 - **Left subplot**: Attention heatmap (patch × patch)
 - **Right subplot**: Time-lag correlation (real timesteps)
@@ -170,6 +165,7 @@ git clone https://github.com/Mascele11/coding-examples.git
 cd coding-examples/multi-head-attention-correlation-maps-example
 
 # Run experiments
+python pip install -r requirements.txt
 python main.py
 ```
 
@@ -181,27 +177,9 @@ python main.py
 
 ---
 
-## Dependencies
-```python
-torch>=1.9.0
-numpy>=1.19.0
-matplotlib>=3.3.0
-timm>=0.4.12  # Vision Transformer models
-```
-
 **Hardware**: CUDA-capable GPU recommended
 
 ---
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| No attention captured | Verify `fused_attn = False` before hooks |
-| Wrong attention shape | Check `drop_cls="auto"` handles CLS token |
-| Blank plots | Ensure `plt.close(fig)` after each save |
-| Mixed visualizations | Use separate figures per head |
-
 
 ## References
 
