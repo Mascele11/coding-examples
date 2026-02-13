@@ -52,6 +52,7 @@ class MultiHeadAttentionRolloutPlotter(MultiHeadAttentionRollout):
             vals: Mean attention values at each lag
         """
         # A_time is (77,77)
+
         lags = np.arange(1, min(max_lag, A_time.shape[0] - 1) + 1)
         vals = []
         for lag in lags:
@@ -102,7 +103,6 @@ class MultiHeadAttentionRolloutPlotter(MultiHeadAttentionRollout):
         num_heads = self.multi_heads_tensor.shape[0]
         print(f"Total heads available: {num_heads}")
         print(f"Plotting heads: {heads_to_plot}\n")
-
         for head_idx in heads_to_plot:
             if head_idx >= num_heads:
                 print(f"⚠ Head {head_idx} out of range (max: {num_heads - 1}), skipping...")
@@ -157,6 +157,9 @@ class MultiHeadAttentionRolloutPlotter(MultiHeadAttentionRollout):
                 cbar1.set_label("Mean Attention", fontsize=9)
 
             # ===== RIGHT SUBPLOT: TIME-LAG CORRELATION =====
+            print(f"Max possible lag (patches): {self.attention_patched.shape[0] - 1}")
+            print(f"Max possible lag (real timesteps): {(self.attention_patched.shape[0] - 1) * self.num_sample_per_patch} (Input length + Prediction length)")
+
             lags, values = self.mean_attention_vs_time_lag(attn_map)
             real_lags = lags * self.num_sample_per_patch
 
@@ -197,14 +200,15 @@ if __name__ == '__main__':
 
     # Experiment 1 - three harmonics:
     experiment = '1'
+    samples = 512
 
-    input_tensor = np.sin(np.arange(512) / 10) + np.sin(np.arange(512) / 5 + 50) + np.cos(np.arange(512) + 50)
+    input_tensor = np.sin(np.arange(samples) / 10) + np.sin(np.arange(samples) / 5 + 50) + np.cos(np.arange(samples) + 50)
     visualizer.plot_attention_heads(input_tensor=input_tensor, prediction_horizon=720, heads_to_plot=heads_to_plot,
                                     experiment=experiment)
     # Experiment 2 - 2 harmonics:
     experiment = '2'
     model = ViTimePrediction(device='cuda:0', model_name='MAE', lookbackRatio=None, tempature=1)
     visualizer = MultiHeadAttentionRolloutPlotter(model=model,attention_layer_name='attn', attention_drop_layer_name='attn_drop')
-    input_tensor = np.sin(np.arange(512) / 5 + 50) + np.cos(np.arange(512) + 50)
+    input_tensor = np.sin(np.arange(samples) / 5 + 50) + np.cos(np.arange(samples) + 50)
     visualizer.plot_attention_heads(input_tensor=input_tensor,prediction_horizon=720, heads_to_plot=heads_to_plot,
                                     experiment=experiment)

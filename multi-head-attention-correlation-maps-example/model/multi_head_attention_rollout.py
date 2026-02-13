@@ -22,6 +22,7 @@ class MultiHeadAttentionRollout:
         self.attention_drop_layer_name = attention_drop_layer_name
         self.num_sample_per_patch = 16
         self.multi_heads_tensor = torch.tensor([0, 1, 2])
+        self.attention_patched = torch.tensor([0, 1, 2])
 
         # Find and Deactivate the Fused Attention Branch -> Necessary for register_forward_hook:
         for name, module in self.model.predictor._iface.model.named_modules():
@@ -81,6 +82,7 @@ class MultiHeadAttentionRollout:
         Returns:
             Time-time attention matrix of shape (grid_w, grid_w)
         """
+
         grid_h = self.model.predictor._iface.model.args.h // self.model.predictor._iface.model.args.patch_size[0]
         grid_w = ((self.model.predictor._iface.model.args.size[0] + self.model.predictor._iface.model.args.size[-1]) //
                   self.model.predictor._iface.model.args.patch_size[1])
@@ -114,6 +116,7 @@ class MultiHeadAttentionRollout:
         A_time = A4.mean(axis=(0, 2))  # -> (cq, ck) = (grid_w, grid_w)
 
         # Got the 77 patches of queries and keys
+        self.attention_patched = A_time
         return A_time
 
     def forward(self, x, prediction_horizon):
@@ -126,7 +129,7 @@ class MultiHeadAttentionRollout:
                 fused_attn_status.append(module.fused_attn)
 
         if fused_attn_status and all(status == False for status in fused_attn_status):
-            print(f"✓ All {len(fused_attn_status)} attention layers have fused_attn = False")
+            print(f"✓ All {len(fused_attn_status)-1} attention layers have fused_attn = False")
         else:
             print(f"⚠ Warning: Not all attention layers have fused_attn = False")
 
