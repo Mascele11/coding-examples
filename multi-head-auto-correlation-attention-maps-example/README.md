@@ -28,7 +28,7 @@ All experiments use **512-sample synthetic signals** and analyze **Head 7**, cho
 - Lag-attention peaks at **≈63, 3x63, 6x63 samples** (multiples of first harmonic fundamental period)
 - 🔍 Hypothesis: Head 7 models harmonic 1 (fundamental period ≈63)
 
-### Experiment 2: Removing the Fundamental — Proof of Periodicity Detection
+### Experiment 2: Removing the Fundamental — Proof of Periodicity Detection by Ablation Study
 
 **Input**: `sin(n/5 + 50) + cos(n + 50)` *(removed `sin(n/10)`)*
 
