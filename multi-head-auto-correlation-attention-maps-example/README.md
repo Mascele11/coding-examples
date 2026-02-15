@@ -43,14 +43,14 @@ All experiments use **512-sample synthetic signals** and analyze **Head 7**, cho
 
 ## Key Insights
 
-- 🔬 **Explainable Temporal Dependencies**: Attention maps reveal *which* historical patterns causally influence predictions — transforming black-box forecasting into interpretable reasoning
-- 🎯 **Zero-Shot Pattern Discovery**: Pre-trained model identifies temporal structures in completely unseen signals without task-specific training
+- 🔬 **Explainable Temporal Dependencies**: Attention maps reveal *which* auto-correlation patterns causally influence predictions for interpretable insights
+- 🎯 **Zero-Shot Usage**: Pre-trained model identifies temporal structures in completely unseen signals without task-specific training
 - ⏰ **Multi-Scale Temporal Modeling**: Single architecture simultaneously captures short-term transients and long-term periodic dependencies across different time horizons
 - 🔍 **Explainable AI**: Attention weights provide transparent evidence of learned relationships that **domain experts** can validate, verify, and trust
 ## Next Steps
 - 🌐 **Multi-Sensor Temporal Modeling**: develop cross-channel attention analysis to visualize how sensor A's history influences sensor B's predictions
 - 🏭 **Domain-Specific Adaptation**: Fine-tune on vehicle telemetry (powertrain, thermal, suspension dynamics) for predictive maintenance
-- 🔍 Extend to a non-predictive task: Exploit big data and temporal correlations to find interpretable insights on anomaly detection system
+- 🔍 **Extend to a non-predictive task**: Exploit big data and temporal correlations to find interpretable insights on anomaly detection system
 ---
 
 ## Implementation Overview
