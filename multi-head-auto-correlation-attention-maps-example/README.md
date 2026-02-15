@@ -162,7 +162,7 @@ plotter.plot_attention_heads(
 ```bash
 # Clone repository
 git clone https://github.com/Mascele11/coding-examples.git
-cd coding-examples/multi-head-attention-correlation-maps-example
+cd coding-examples/multi-head-auto-correlation-attention-maps-example
 
 # Run experiments
 python pip install -r requirements.txt
