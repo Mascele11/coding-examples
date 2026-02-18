@@ -45,12 +45,11 @@ def experiment_setting(args, checkpoint_path):
     # Load the checkpoint
     if os.path.exists(checkpoint_path):
         print(f'Checkpoint found at {checkpoint_path}')
-        #checkpoint = torch.load(checkpoint_path, map_location=exp.device)
-        #exp.model.load_state_dict(checkpoint)
-        #exp.model.eval()
         return exp
     else:
         print(f'Checkpoint not found at {checkpoint_path}')
+        print('Please check the model config compliant with the checkpoint and try again.')
+        print('If model training not performed yet, please see iTransformer repo for more details on training.')
         return None
 
 
