@@ -185,10 +185,6 @@ class MultiHeadAttentionRolloutPlotter(Exp_Long_Term_Forecast):
             top_overlay_percent: Percentile threshold for highlighting top attention
         """
 
-        print(f"\n{'=' * 60}")
-        print(f"EXPERIMENT: {experiment}")
-        print(f"{'=' * 60}")
-
         os.makedirs(save_dir, exist_ok=True)
 
         test_data, test_loader = self._get_data(flag='test')
@@ -216,8 +212,9 @@ class MultiHeadAttentionRolloutPlotter(Exp_Long_Term_Forecast):
         # Analyze Global Flow as a Network and Rollout as paper:
         analyzer.get_average_feature_correlation(layer_idx=None)
 
-        top_nodes, effective_adj, core_subgraph = analyzer.analyze_global_flow(top_k=10)
-
+        # Treats the attention-map as graph:
+        top_nodes, effective_adj, core_subgraph = analyzer.analyze_attention_maps_as_graph(top_k=10)
+        analyzer.plot_attention_core_subgraph(core_subgraph, top_nodes, save_path=os.path.join(save_dir, 'page_rank_skeleton_graph.png'))
         # Get average correlations
         avg_attention = analyzer.get_average_feature_correlation(layer_idx=layer_idx)
         # Visualize

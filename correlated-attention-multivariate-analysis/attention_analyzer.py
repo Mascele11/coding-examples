@@ -51,13 +51,9 @@ class AttentionAnalyzer:
         print(f"Batch size: {self.batch_size}")
         print(f"Heads: {self.n_heads}")
         print(f"Variables: {self.n_variates}")
-        print(f"Feature names: {self.feature_names}")
+        #print(f"Feature names: {self.feature_names}")
         print("="*60)
-    
-    # ============================================================================
-    # QUESTION 1: AVERAGE FEATURE CORRELATIONS (GLOBAL)
-    # ============================================================================
-    
+
     def get_average_feature_correlation(self, layer_idx=None):
         """
         Question 1: In average, which are the most correlated features?
@@ -76,9 +72,6 @@ class AttentionAnalyzer:
         Returns:
             avg_attention: [N, N] matrix of average feature-feature attention
         """
-        print("\n" + "="*60)
-        print("QUESTION 1: AVERAGE FEATURE CORRELATIONS")
-        print("="*60)
         
         if layer_idx == 'separate':
             # Return separate matrix for each layer
@@ -126,13 +119,7 @@ class AttentionAnalyzer:
         
         # Final average
         avg_attention = attention_sum / count
-        
-        print(f"\nAggregated over:")
-        print(f"  - Test iterations: {self.n_test_iters}")
-        print(f"  - Layers: {len(layers_to_process) if layer_idx is None else 1}")
-        print(f"  - Batches: {self.batch_size}")
-        print(f"  - Heads: {self.n_heads}")
-        print(f"  - Total samples: {count * self.batch_size}")
+
         
         return avg_attention.cpu().numpy()
     
@@ -301,10 +288,6 @@ class AttentionAnalyzer:
         # Extract submatrix and feature names
         filtered_matrix = attn_matrix[np.ix_(top_indices, top_indices)]
         filtered_names = [self.feature_names[i] for i in top_indices]
-        
-        print(f"\n📊 Top {top_k} Most Correlated Features:")
-        for idx, i in enumerate(top_indices):
-            print(f"  {idx+1}. {self.feature_names[i]} (total attention: {total_attention[i]:.4f})")
         
         # Treats the attention-map as graph:
 
@@ -475,7 +458,50 @@ class AttentionAnalyzer:
         
         return importance_df
 
-    def analyze_global_flow(self, top_k=5):
+    def plot_attention_core_subgraph(self, core_subgraph, top_nodes, save_path=None):
+        plt.figure(figsize=(10, 8))
+
+        # We use a spring layout with a fixed seed for consistency
+        pos = nx.spring_layout(core_subgraph, k=1.5, iterations=50, seed=42)
+
+        # 1. Draw the edges with transparency based on weight
+        edges = core_subgraph.edges(data=True)
+        weights = [d['weight'] * 5 for u, v, d in edges]  # Scale for visibility
+
+        nx.draw_networkx_edges(
+            core_subgraph, pos,
+            width=weights,
+            edge_color='gray',
+            alpha=0.5,
+            arrowsize=20,
+            connectionstyle='arc3,rad=0.1'  # Adds slight curve to see reciprocal edges
+        )
+
+        # 2. Draw nodes: Color the 'Primary' node (top of PageRank) differently
+        node_colors = ['#ff7f0e' if node == top_nodes[0] else '#1f77b4' for node in core_subgraph.nodes()]
+
+        # Scale node size by their PageRank importance (calculated earlier)
+        # Since core_subgraph nodes are a subset, we use their degree as a proxy if pagerank isn't handy
+        d = dict(core_subgraph.degree)
+        node_sizes = [v * 500 for v in d.values()]
+
+        nx.draw_networkx_nodes(
+            core_subgraph, pos,
+            node_size=node_sizes,
+            node_color=node_colors,
+            alpha=0.9
+        )
+
+        # 3. Add Labels
+        nx.draw_networkx_labels(core_subgraph, pos, font_size=12, font_weight='bold')
+
+        plt.title("Global Attention Skeleton (Core Subgraph)", fontsize=15)
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+
+
+    def analyze_attention_maps_as_graph(self, top_k=5):
         """
             attn_layers: List or array of matrices [A1, A2, ... AT]
             """
@@ -485,7 +511,7 @@ class AttentionAnalyzer:
         effective_adj = np.eye(self.n_variates)
         for A in attn_layers:
             # 1. Residual Handling: 0.5 * I + 0.5 * A
-            # This prevents the original token meaning from being "washed away"
+            # This prevents the original token meaning from being "washed away" - see paper ref:
             A_residual = 0.5 * np.eye(self.n_variates) + 0.5 * A
 
             # 2. Sequential Matmul (Flow from layer to layer)
@@ -493,7 +519,7 @@ class AttentionAnalyzer:
 
             # 3. Thresholding (Sparsification)
             # We zero out weak connections to prevent a "complete graph" hairball
-            effective_adj[effective_adj < 0.01] = 0
+            effective_adj[effective_adj < 0.05] = 0
 
         # 2. Treat this 'Total Flow' as a Graph
         # Remove diagonal to see inter-token influence only
@@ -509,357 +535,3 @@ class AttentionAnalyzer:
         core_subgraph = G.subgraph(top_nodes)
 
         return top_nodes, effective_adj, core_subgraph
-    
-    # ============================================================================
-    # QUESTION 2: SAMPLE-SPECIFIC CORRELATIONS
-    # ============================================================================
-    
-    def get_sample_correlation(self, test_iter_idx=0, batch_idx=0, layer_idx=None):
-        """
-        Question 2: Which is the correlation among features in a particular sample?
-        
-        Args:
-            test_iter_idx: Which test iteration to use
-            batch_idx: Which sample in the batch
-            layer_idx: Which layer to use (None = average all layers)
-        
-        Returns:
-            sample_attention: [N, N] attention matrix for this specific sample
-        """
-        print("\n" + "="*60)
-        print("QUESTION 2: SAMPLE-SPECIFIC CORRELATIONS")
-        print("="*60)
-        print(f"Test iteration: {test_iter_idx}/{self.n_test_iters}")
-        print(f"Batch sample: {batch_idx}/{self.batch_size}")
-        
-        if layer_idx is None:
-            # Average across all layers
-            attention_sum = torch.zeros(self.n_variates, self.n_variates)
-            
-            for layer in range(self.n_layers):
-                # Get attention for this sample: [Heads, N, N]
-                attn = self.multi_heads_tensor[test_iter_idx][layer][batch_idx]
-                
-                # Average over heads: [Heads, N, N] → [N, N]
-                attn_avg_heads = attn.mean(dim=0)
-                
-                attention_sum += attn_avg_heads
-            
-            sample_attention = attention_sum / self.n_layers
-            print(f"Averaged over: {self.n_layers} layers, {self.n_heads} heads")
-        else:
-            # Use specific layer
-            attn = self.multi_heads_tensor[test_iter_idx][layer_idx][batch_idx]
-            sample_attention = attn.mean(dim=0)  # Average over heads
-            print(f"Using: Layer {layer_idx}, averaged over {self.n_heads} heads")
-        
-        print("="*60)
-        
-        return sample_attention.cpu().numpy()
-    
-    def visualize_sample_correlation(self, sample_attention, test_iter_idx, 
-                                    batch_idx, save_path=None):
-        """
-        Visualize sample-specific feature correlations
-        """
-        fig, ax = plt.subplots(figsize=(10, 8))
-        
-        sns.heatmap(
-            sample_attention,
-            annot=True,
-            fmt='.3f',
-            cmap='RdYlBu_r',
-            xticklabels=self.feature_names,
-            yticklabels=self.feature_names,
-            cbar_kws={'label': 'Attention'},
-            ax=ax,
-            square=True,
-            linewidths=0.5
-        )
-        
-        ax.set_title(f'Feature Correlations\nTest Iter: {test_iter_idx}, Sample: {batch_idx}', 
-                    fontsize=14, fontweight='bold', pad=20)
-        ax.set_xlabel('Feature (Attends To)', fontsize=12)
-        ax.set_ylabel('Feature (Query)', fontsize=12)
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"✓ Saved figure to: {save_path}")
-        
-        plt.show()
-        return fig
-    
-    def compare_samples(self, n_samples=4, layer_idx=None):
-        """
-        Compare feature correlations across multiple samples
-        
-        Args:
-            n_samples: Number of random samples to compare
-            layer_idx: Which layer to use (None = average all)
-        """
-        fig, axes = plt.subplots(2, 2, figsize=(16, 14))
-        axes = axes.flatten()
-        
-        for i in range(min(n_samples, 4)):
-            # Random sample
-            test_iter = np.random.randint(0, self.n_test_iters)
-            batch_idx = np.random.randint(0, self.batch_size)
-            
-            # Get correlation
-            sample_attn = self.get_sample_correlation(test_iter, batch_idx, layer_idx)
-            
-            # Plot
-            sns.heatmap(
-                sample_attn,
-                annot=True,
-                fmt='.2f',
-                cmap='RdYlBu_r',
-                xticklabels=self.feature_names,
-                yticklabels=self.feature_names,
-                cbar_kws={'label': 'Attention'},
-                ax=axes[i],
-                square=True,
-                linewidths=0.5
-            )
-            
-            axes[i].set_title(f'Sample: Test {test_iter}, Batch {batch_idx}', 
-                            fontsize=12, fontweight='bold')
-        
-        plt.tight_layout()
-        plt.show()
-        return fig
-    
-    # ============================================================================
-    # LAYER-SPECIFIC ANALYSIS
-    # ============================================================================
-    
-    def compare_layers(self, save_path=None):
-        """
-        Compare feature correlations across different layers
-        Shows how correlations evolve through the network
-        """
-        fig, axes = plt.subplots(1, self.n_layers, figsize=(8*self.n_layers, 6))
-        
-        if self.n_layers == 1:
-            axes = [axes]
-        
-        for layer in range(self.n_layers):
-            # Get average attention for this layer
-            layer_avg = self._compute_average(layer_idx=layer)
-            
-            # Plot
-            sns.heatmap(
-                layer_avg,
-                annot=True,
-                fmt='.3f',
-                cmap='RdYlBu_r',
-                xticklabels=self.feature_names,
-                yticklabels=self.feature_names,
-                cbar_kws={'label': 'Attention'},
-                ax=axes[layer],
-                square=True,
-                linewidths=0.5,
-                vmin=0,
-                vmax=layer_avg.max()
-            )
-            
-            axes[layer].set_title(f'Layer {layer}', fontsize=14, fontweight='bold')
-        
-        fig.suptitle('Feature Correlations Across Layers', 
-                    fontsize=16, fontweight='bold', y=1.02)
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"✓ Saved figure to: {save_path}")
-        
-        plt.show()
-        return fig
-    
-    # ============================================================================
-    # STATISTICAL ANALYSIS
-    # ============================================================================
-    
-    def compute_correlation_statistics(self):
-        """
-        Compute statistics of feature correlations across all samples
-        
-        Returns mean, std, min, max for each feature pair
-        """
-        # Collect all attention matrices
-        all_attentions = []
-        
-        for test_iter in range(self.n_test_iters):
-            for layer in range(self.n_layers):
-                attn = self.multi_heads_tensor[test_iter][layer]
-                # Average over heads: [Batch, Heads, N, N] → [Batch, N, N]
-                attn_avg_heads = attn.mean(dim=1)
-                all_attentions.append(attn_avg_heads)
-        
-        # Stack: [Total_samples, N, N]
-        all_attentions = torch.cat(all_attentions, dim=0)
-        
-        # Compute statistics
-        mean = all_attentions.mean(dim=0).cpu().numpy()
-        std = all_attentions.std(dim=0).cpu().numpy()
-        min_val = all_attentions.min(dim=0)[0].cpu().numpy()
-        max_val = all_attentions.max(dim=0)[0].cpu().numpy()
-        
-        print("\n" + "="*60)
-        print("CORRELATION STATISTICS")
-        print("="*60)
-        print(f"Total samples: {all_attentions.shape[0]}")
-        print(f"Mean attention range: [{mean.min():.4f}, {mean.max():.4f}]")
-        print(f"Std attention range: [{std.min():.4f}, {std.max():.4f}]")
-        print("="*60)
-        
-        return {
-            'mean': mean,
-            'std': std,
-            'min': min_val,
-            'max': max_val
-        }
-    
-    def visualize_correlation_uncertainty(self, stats, save_path=None):
-        """
-        Visualize mean ± std for correlations
-        """
-        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
-        
-        # Plot mean
-        sns.heatmap(
-            stats['mean'],
-            annot=True,
-            fmt='.3f',
-            cmap='RdYlBu_r',
-            xticklabels=self.feature_names,
-            yticklabels=self.feature_names,
-            cbar_kws={'label': 'Mean Attention'},
-            ax=axes[0],
-            square=True,
-            linewidths=0.5
-        )
-        axes[0].set_title('Mean Feature Correlations', fontsize=14, fontweight='bold')
-        
-        # Plot std
-        sns.heatmap(
-            stats['std'],
-            annot=True,
-            fmt='.3f',
-            cmap='viridis',
-            xticklabels=self.feature_names,
-            yticklabels=self.feature_names,
-            cbar_kws={'label': 'Std Deviation'},
-            ax=axes[1],
-            square=True,
-            linewidths=0.5
-        )
-        axes[1].set_title('Correlation Uncertainty (Std)', fontsize=14, fontweight='bold')
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"✓ Saved figure to: {save_path}")
-        
-        plt.show()
-        return fig
-
-
-# ============================================================================
-# USAGE EXAMPLE
-# ============================================================================
-
-def analyze_itransformer_attention(multi_heads_tensor, feature_names=None, 
-                                  save_dir='results/attention_analysis/'):
-    """
-    Complete analysis pipeline for iTransformer attention weights
-    
-    Args:
-        multi_heads_tensor: The attention weights from your model
-        feature_names: Names of your features
-        save_dir: Directory to save results
-    """
-    import os
-    os.makedirs(save_dir, exist_ok=True)
-    
-    # Initialize analyzer
-    analyzer = AttentionAnalyzer(multi_heads_tensor, feature_names)
-    
-    print("\n\n")
-    print("#"*60)
-    print("# QUESTION 1: AVERAGE FEATURE CORRELATIONS")
-    print("#"*60)
-    
-    # Get average correlations
-    avg_attention = analyzer.get_average_feature_correlation(layer_idx=None)
-    
-    # Visualize
-    analyzer.visualize_average_correlation(
-        avg_attention, 
-        save_path=os.path.join(save_dir, 'average_correlations.png')
-    )
-    
-    # Get top correlations
-    top_corr = analyzer.get_top_correlations(avg_attention, top_k=10)
-    
-    # Analyze feature importance
-    importance = analyzer.analyze_feature_importance(avg_attention)
-    
-    # Compare layers
-    if analyzer.n_layers > 1:
-        analyzer.compare_layers(
-            save_path=os.path.join(save_dir, 'layer_comparison.png')
-        )
-    
-    print("\n\n")
-    print("#"*60)
-    print("# QUESTION 2: SAMPLE-SPECIFIC CORRELATIONS")
-    print("#"*60)
-    
-    # Get sample-specific correlation
-    sample_attn = analyzer.get_sample_correlation(
-        test_iter_idx=0, 
-        batch_idx=0, 
-        layer_idx=None
-    )
-    
-    # Visualize
-    analyzer.visualize_sample_correlation(
-        sample_attn, 
-        test_iter_idx=0, 
-        batch_idx=0,
-        save_path=os.path.join(save_dir, 'sample_correlation.png')
-    )
-    
-    # Compare multiple samples
-    analyzer.compare_samples(n_samples=4)
-    
-    print("\n\n")
-    print("#"*60)
-    print("# STATISTICAL ANALYSIS")
-    print("#"*60)
-    
-    # Compute statistics
-    stats = analyzer.compute_correlation_statistics()
-    
-    # Visualize uncertainty
-    analyzer.visualize_correlation_uncertainty(
-        stats,
-        save_path=os.path.join(save_dir, 'correlation_uncertainty.png')
-    )
-    
-    print("\n\n")
-    print("="*60)
-    print("✅ ANALYSIS COMPLETE")
-    print("="*60)
-    print(f"Results saved to: {save_dir}")
-    
-    return analyzer, {
-        'average_attention': avg_attention,
-        'top_correlations': top_corr,
-        'feature_importance': importance,
-        'statistics': stats
-    }
