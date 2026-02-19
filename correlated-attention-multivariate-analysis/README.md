@@ -94,8 +94,7 @@ The convergence of three independent methods (mean aggregation, PageRank, thresh
 ## References
 
 - Abnar & Zuidema (2020) — *Quantifying Attention Flow in Transformers* [`arXiv:2005.00928`](https://arxiv.org/abs/2005.00928)  
-- Veličković et al. (2018) — *Graph Attention Networks*  
-- Clark et al. (2019) — *What Does BERT Look At?*  
+- Veličković et al. (2018) — *Graph Attention Networks*
 - Liu et al. (2024) — *iTransformer* [`github.com/thuml/iTransformer`](https://github.com/thuml/iTransformer)
 - Nguyen Q.M., Nguyen L.M., Das S. (2023) — *Correlated Attention in Transformers for Multivariate Time Series* [`arXiv:2311.11959`](https://arxiv.org/abs/2311.11959)
 
