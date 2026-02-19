@@ -1,6 +1,6 @@
 # Correlated Attention — Multivariate Analysis
 
-> Treating iTransformer attention maps as weighted directed graphs to discover information-hub features in multivariate time-series forecasting.
+> Treating iTransformer attention maps as weighted directed graphs to discover most informative or attentioned features in multivariate time-series forecasting.
 
 ---
 
