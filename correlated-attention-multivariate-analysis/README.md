@@ -81,9 +81,21 @@ The convergence of three independent methods (mean aggregation, PageRank, thresh
 
 ---
 
+## Motivation & Next Steps
+
+- Transformer-based forecasting models are typically evaluated on predictive accuracy alone, leaving the rich internal representations largely unexplored. This experiment was designed to ask a different question: **can we exploit attention map interpretibility for feature importance identification on the specified model task?**
+
+- A natural next step is to learn attention maps on application dataset (e.g., vehicle dynamics) for a non-predictive task (i.e., anomaly detection) to find the most important features, and feature dependency on capturing such specified anomaly.
+
+- Additionally, the **CAB (Correlated Attention Block)** layer offers also the possibility to add lagged correlation between the features. This methodology could add value for cause and effect relationships between features (see references)
+
+---
+
 ## References
 
 - Abnar & Zuidema (2020) — *Quantifying Attention Flow in Transformers* [`arXiv:2005.00928`](https://arxiv.org/abs/2005.00928)  
 - Veličković et al. (2018) — *Graph Attention Networks*  
 - Clark et al. (2019) — *What Does BERT Look At?*  
 - Liu et al. (2024) — *iTransformer* [`github.com/thuml/iTransformer`](https://github.com/thuml/iTransformer)
+- Nguyen Q.M., Nguyen L.M., Das S. (2023) — *Correlated Attention in Transformers for Multivariate Time Series* [`arXiv:2311.11959`](https://arxiv.org/abs/2311.11959)
+
