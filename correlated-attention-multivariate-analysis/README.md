@@ -98,6 +98,66 @@ The convergence of three independent methods (mean aggregation, PageRank, thresh
 - Liu et al. (2024) — *iTransformer* [`github.com/thuml/iTransformer`](https://github.com/thuml/iTransformer)
 - Nguyen Q.M., Nguyen L.M., Das S. (2023) — *Correlated Attention in Transformers for Multivariate Time Series* [`arXiv:2311.11959`](https://arxiv.org/abs/2311.11959)
 
+
+---
+
+## Quick Setup
+
+
+### 1. Clone repos
+```bash
+git clone https://github.com/Mascele11/coding-examples.git
+cd coding-examples/correlated-attention-multivariate-analysis
+
+# iTransformer (for training + dataset)
+git clone https://github.com/thuml/iTransformer.git
+```
+
+### 2. Install requirements
+```bash
+pip install -r requirements.txt
+```
+
+<details>
+<summary>Core dependencies</summary>
+```
+torch>=2.0
+numpy
+pandas
+matplotlib
+seaborn
+networkx
+scikit-learn
+```
+</details>
+
+### 3. Get the dataset
+
+Follow the iTransformer instructions to download the dataset and place it under:
+```
+iTransformer/dataset/
+```
+
+### 4. Train the model & save a checkpoint
+
+Run training from inside the iTransformer repo (adjust flags to your dataset):
+```bash
+cd iTransformer
+bash scripts/multivariate_forecasting/Traffic/iTransformer.sh
+```
+
+The checkpoint will be saved by default at:
+```
+iTransformer/checkpoints/<experiment_name>/checkpoint.pth
+```
+
+### 5. Place the checkpoint
+
+Copy (or symlink) the checkpoint into this repo's expected folder:
+```bash
+cp iTransformer/checkpoints//checkpoint.pth \
+   ../coding-examples/correlated-attention-multivariate-analysis/checkpoints/checkpoint.pth
+```
 ---
 
 **Author**: Marcello Babbi ([marcello.babbi@gmail.com](mailto:marcello.babbi@gmail.com))  
