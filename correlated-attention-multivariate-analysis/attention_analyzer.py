@@ -459,7 +459,7 @@ class AttentionAnalyzer:
         return importance_df
 
     def plot_attention_core_subgraph(self, core_subgraph, top_nodes, save_path=None):
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(4, 2))
 
         # We use a spring layout with a fixed seed for consistency
         pos = nx.spring_layout(core_subgraph, k=1.5, iterations=50, seed=42)
@@ -473,7 +473,7 @@ class AttentionAnalyzer:
             width=weights,
             edge_color='gray',
             alpha=0.5,
-            arrowsize=20,
+            arrowsize=10,
             connectionstyle='arc3,rad=0.1'  # Adds slight curve to see reciprocal edges
         )
 
@@ -483,7 +483,7 @@ class AttentionAnalyzer:
         # Scale node size by their PageRank importance (calculated earlier)
         # Since core_subgraph nodes are a subset, we use their degree as a proxy if pagerank isn't handy
         d = dict(core_subgraph.degree)
-        node_sizes = [v * 500 for v in d.values()]
+        node_sizes = [v * 100 for v in d.values()]
 
         nx.draw_networkx_nodes(
             core_subgraph, pos,
@@ -493,12 +493,12 @@ class AttentionAnalyzer:
         )
 
         # 3. Add Labels
-        nx.draw_networkx_labels(core_subgraph, pos, font_size=12, font_weight='bold')
+        nx.draw_networkx_labels(core_subgraph, pos, font_size=4, font_weight='bold')
 
-        plt.title("Global Attention Skeleton (Core Subgraph)", fontsize=15)
+        plt.title("Attention Map Core Graph Nodes (PageRank Global Importance)", fontsize=8)
         plt.axis('off')
         plt.tight_layout()
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.savefig(save_path, dpi=200, bbox_inches='tight')
 
 
     def analyze_attention_maps_as_graph(self, top_k=5):
