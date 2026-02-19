@@ -85,7 +85,7 @@ The convergence of three independent methods (mean aggregation, PageRank, thresh
 
 - Transformer-based forecasting models are typically evaluated on predictive accuracy alone, leaving the rich internal representations largely unexplored. This experiment was designed to ask a different question: **can we exploit attention map interpretibility for feature importance identification on the specified model task?**
 
-- A natural next step is to learn attention maps on application dataset (e.g., vehicle dynamics) for a non-predictive task (i.e., anomaly detection) to find the most important features, and feature dependency on capturing such specified anomaly.
+- A natural next step is to learn attention maps on application dataset (e.g., vehicle dynamics) for a non-predictive task (i.e., anomaly detection) to find the most important features, and feature dependency on capturing such a specified anomaly.
 
 - Additionally, the **CAB (Correlated Attention Block)** layer offers also the possibility to add lagged correlation between the features. This methodology could add value for cause and effect relationships between features (see references)
 
