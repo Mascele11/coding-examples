@@ -98,3 +98,8 @@ The convergence of three independent methods (mean aggregation, PageRank, thresh
 - Liu et al. (2024) — *iTransformer* [`github.com/thuml/iTransformer`](https://github.com/thuml/iTransformer)
 - Nguyen Q.M., Nguyen L.M., Das S. (2023) — *Correlated Attention in Transformers for Multivariate Time Series* [`arXiv:2311.11959`](https://arxiv.org/abs/2311.11959)
 
+---
+
+**Author**: Marcello Babbi ([marcello.babbi@gmail.com](mailto:marcello.babbi@gmail.com))  
+**License**: MIT  
+**Last Updated**: February 2026
