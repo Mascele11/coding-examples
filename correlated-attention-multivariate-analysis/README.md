@@ -1,4 +1,4 @@
-# Correlated Attention — Multivariate Analysis
+# Correlated Attention Feature-Feature Attention Importance For Multivariate Time-series Analysis
 
 > Treating iTransformer attention maps as weighted directed graphs to discover most informative or attentioned features in multivariate time-series forecasting.
 
